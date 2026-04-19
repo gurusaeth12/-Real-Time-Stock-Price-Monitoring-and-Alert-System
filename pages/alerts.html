@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Alerts — StockAlert Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #080c10; --surface: #0e1520; --card: #121b28;
+      --border: #1e2d42; --accent: #00e5a0; --accent2: #0094ff;
+      --warn: #ff6b35; --danger: #ff4444;
+      --text: #e8f0fe; --muted: #6b7e96;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+    .sidebar {
+      position: fixed; top: 0; left: 0; bottom: 0; width: 220px;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; padding: 1.5rem 0; z-index: 10;
+    }
+    .sidebar-logo {
+      font-family: var(--font-display); font-size: 1.4rem;
+      letter-spacing: 2px; color: var(--accent);
+      padding: 0 1.5rem 1.5rem; border-bottom: 1px solid var(--border);
+    }
+    .sidebar-logo span { color: var(--text); }
+    .sidebar-nav { flex: 1; padding: 1.5rem 0; }
+    .nav-item {
+      display: flex; align-items: center; gap: 0.8rem;
+      padding: 0.75rem 1.5rem; color: var(--muted);
+      font-size: 0.88rem; cursor: pointer; text-decoration: none;
+      transition: color 0.15s, background 0.15s;
+      border-left: 2px solid transparent;
+    }
+    .nav-item:hover, .nav-item.active {
+      color: var(--accent); background: rgba(0,229,160,0.05);
+      border-left-color: var(--accent);
+    }
+    .sidebar-user {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border);
+      font-size: 0.82rem; color: var(--muted);
+    }
+    .sidebar-user strong { display: block; color: var(--text); margin-bottom: 0.2rem; }
+    .logout-btn {
+      margin-top: 0.5rem; background: none; border: none;
+      color: var(--danger); font-size: 0.8rem; cursor: pointer;
+      font-family: var(--font-body); padding: 0;
+    }
+    .main { margin-left: 220px; padding: 2rem; position: relative; z-index: 1; }
+    .page-title { font-family: var(--font-display); font-size: 2.5rem; letter-spacing: 1px; margin-bottom: 2rem; }
+    .alerts-table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--border); }
+    .alerts-table th {
+      font-family: var(--font-mono); font-size: 0.65rem;
+      letter-spacing: 2px; text-transform: uppercase;
+      color: var(--muted); text-align: left;
+      padding: 0.8rem 1.2rem; border-bottom: 1px solid var(--border);
+    }
+    .alerts-table td {
+      padding: 1rem 1.2rem; border-bottom: 1px solid rgba(30,45,66,0.5);
+      font-size: 0.88rem;
+    }
+    .alerts-table tr:hover td { background: rgba(0,229,160,0.02); }
+    .badge {
+      display: inline-block; padding: 0.2rem 0.6rem;
+      font-family: var(--font-mono); font-size: 0.72rem;
+      border-radius: 2px; font-weight: 700;
+    }
+    .badge-above { background: rgba(0,229,160,0.15); color: var(--accent); }
+    .badge-below { background: rgba(255,68,68,0.15); color: var(--danger); }
+    .badge-email { background: rgba(0,148,255,0.15); color: var(--accent2); }
+    .badge-app { background: rgba(168,85,247,0.15); color: #a855f7; }
+    .badge-sms { background: rgba(255,107,53,0.15); color: var(--warn); }
+    .del-btn {
+      background: none; border: 1px solid var(--border);
+      color: var(--danger); padding: 0.3rem 0.6rem;
+      cursor: pointer; font-size: 0.8rem; transition: border-color 0.2s;
+    }
+    .del-btn:hover { border-color: var(--danger); }
+    .empty { text-align: center; padding: 4rem; color: var(--muted); }
+    .empty a { color: var(--accent); text-decoration: none; }
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="sidebar">
+  <div class="sidebar-logo">STOCK<span>ALERT</span></div>
+  <nav class="sidebar-nav">
+    <a class="nav-item" href="dashboard.html">📊 Dashboard</a>
+    <a class="nav-item active" href="alerts.html">🔔 My Alerts</a>
+    <a class="nav-item" href="../index.html">🏠 Home</a>
+  </nav>
+  <div class="sidebar-user">
+    <strong id="sidebarUser">Loading...</strong>
+    <span id="sidebarEmail"></span>
+    <button class="logout-btn" onclick="auth.signOut().then(()=>location.href='login.html')">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="page-title">MY ALERTS</div>
+  <div id="alertsContainer">
+    <div class="empty">Loading alerts...</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="../firebase-config.js"></script>
+<script>
+  let currentUser = null;
+
+  function renderAlerts(alertsMap) {
+    const container = document.getElementById('alertsContainer');
+    const entries = Object.entries(alertsMap || {});
+    if (!entries.length) {
+      container.innerHTML = `<div class="empty">No alerts yet. <a href="dashboard.html">Set one →</a></div>`;
+      return;
+    }
+    container.innerHTML = `
+      <table class="alerts-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Symbol</th>
+            <th>Target Price</th>
+            <th>Condition</th>
+            <th>Channel</th>
+            <th>Created</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${entries.map(([key, a], i) => `
+            <tr>
+              <td style="color:var(--muted);font-family:var(--font-mono);font-size:0.75rem">${i+1}</td>
+              <td style="font-family:var(--font-mono);font-weight:700">${a.sym}</td>
+              <td style="font-family:var(--font-mono);color:var(--accent)">$${a.target}</td>
+              <td><span class="badge badge-${a.condition}">${a.condition === 'above' ? '▲ Above' : '▼ Below'}</span></td>
+              <td><span class="badge badge-${a.channel}">${a.channel.toUpperCase()}</span></td>
+              <td style="color:var(--muted);font-size:0.8rem">${new Date(a.createdAt).toLocaleDateString()}</td>
+              <td><button class="del-btn" onclick="deleteAlert('${key}')">Delete</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  async function deleteAlert(key) {
+    if (!currentUser) return;
+    await db.ref(`users/${currentUser.uid}/alerts/${key}`).remove();
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    currentUser = user;
+    document.getElementById('sidebarUser').textContent = user.displayName || 'Investor';
+    document.getElementById('sidebarEmail').textContent = user.email;
+
+    db.ref(`users/${user.uid}/alerts`).on('value', snap => {
+      renderAlerts(snap.val());
+    });
+  });
+</script>
+</body>
+</html>
