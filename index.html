@@ -1,566 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>StockAlert Pro — Real-Time Stock Monitoring</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>StockPulse — Real-Time Stock Alerts</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#05080f;--surface:#0b1120;--card:#0f1929;
+  --border:#1a2840;--accent:#00d4aa;--accent2:#3b82f6;
+  --red:#ef4444;--text:#f0f6ff;--muted:#64748b;
+  --font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,212,170,0.08),transparent);
+  pointer-events:none;z-index:0}
 
-    :root {
-      --bg: #080c10;
-      --surface: #0e1520;
-      --card: #121b28;
-      --border: #1e2d42;
-      --accent: #00e5a0;
-      --accent2: #0094ff;
-      --warn: #ff6b35;
-      --text: #e8f0fe;
-      --muted: #6b7e96;
-      --font-display: 'Bebas Neue', sans-serif;
-      --font-body: 'DM Sans', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 2rem;height:64px;
+  background:rgba(5,8,15,0.9);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border)}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center}
+.logo-icon svg{width:18px;height:18px;fill:#05080f}
+.logo-text{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+.logo-text span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:2rem}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.875rem;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--text)}
+.nav-actions{display:flex;gap:0.75rem;align-items:center}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text);
+  padding:0.5rem 1.1rem;border-radius:8px;font-size:0.875rem;font-weight:500;
+  cursor:pointer;text-decoration:none;transition:border-color .2s,background .2s}
+.btn-ghost:hover{border-color:var(--accent);background:rgba(0,212,170,0.05)}
+.btn-primary{background:var(--accent);color:#05080f;border:none;
+  padding:0.5rem 1.25rem;border-radius:8px;font-size:0.875rem;font-weight:600;
+  cursor:pointer;text-decoration:none;transition:opacity .2s,transform .15s;display:inline-block}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px)}
 
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      overflow-x: hidden;
-    }
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;
+  padding:6rem 1.5rem 4rem;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);
+  color:var(--accent);border-radius:99px;padding:4px 14px;
+  font-size:0.78rem;font-weight:500;letter-spacing:0.5px;
+  margin-bottom:1.75rem;animation:fadeUp .5s ease both}
+.dot-live{width:6px;height:6px;border-radius:50%;background:var(--accent);
+  animation:pulse 1.5s ease-in-out infinite}
+.hero h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:700;
+  line-height:1.08;letter-spacing:-2px;
+  animation:fadeUp .5s .15s ease both}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero-sub{max-width:520px;color:var(--muted);font-size:1.05rem;line-height:1.7;
+  margin:1.5rem auto 2.5rem;animation:fadeUp .5s .3s ease both}
+.hero-btns{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;
+  animation:fadeUp .5s .45s ease both}
+.hero-btns .btn-primary{padding:0.75rem 2rem;font-size:1rem}
+.hero-btns .btn-ghost{padding:0.75rem 1.75rem;font-size:1rem}
 
-    /* GRID NOISE BACKGROUND */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
-    }
+/* TICKER */
+.ticker-bar{border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+  background:var(--surface);overflow:hidden;padding:0.55rem 0;position:relative;z-index:1}
+.ticker-track{display:flex;width:max-content;animation:scroll 40s linear infinite}
+.ticker-item{display:flex;align-items:center;gap:8px;padding:0 2rem;
+  font-family:var(--mono);font-size:0.78rem;white-space:nowrap}
+.t-sym{font-weight:600;color:var(--text)}
+.t-price{color:var(--muted)}
+.t-up{color:var(--accent)}
+.t-dn{color:var(--red)}
 
-    /* NAV */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1rem 2.5rem;
-      background: rgba(8,12,16,0.85);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-    }
-    .logo {
-      font-family: var(--font-display);
-      font-size: 1.6rem;
-      letter-spacing: 2px;
-      color: var(--accent);
-    }
-    .logo span { color: var(--text); }
-    .nav-links { display: flex; gap: 2rem; }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      transition: color 0.2s;
-    }
-    .nav-links a:hover { color: var(--accent); }
-    .nav-cta {
-      background: var(--accent);
-      color: #080c10 !important;
-      padding: 0.5rem 1.2rem;
-      border-radius: 4px;
-      font-weight: 600 !important;
-    }
+/* FEATURES */
+.features{max-width:1100px;margin:6rem auto;padding:0 1.5rem;position:relative;z-index:1}
+.section-label{font-size:0.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--accent);margin-bottom:0.75rem}
+.section-title{font-size:clamp(1.8rem,3.5vw,2.8rem);font-weight:700;
+  letter-spacing:-1px;margin-bottom:3.5rem}
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;
+  background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.feat-card{background:var(--card);padding:2rem;transition:background .2s}
+.feat-card:hover{background:#131f33}
+.feat-icon{width:44px;height:44px;border-radius:10px;
+  background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.2);
+  display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem}
+.feat-icon svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.feat-title{font-size:1rem;font-weight:600;margin-bottom:0.5rem}
+.feat-desc{font-size:0.875rem;color:var(--muted);line-height:1.65}
 
-    /* HERO */
-    .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: flex-start;
-      padding: 8rem 2.5rem 4rem;
-      position: relative; z-index: 1;
-      max-width: 1200px; margin: 0 auto;
-    }
-    .hero-tag {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--accent);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 1.5rem;
-      opacity: 0; animation: fadeUp 0.6s 0.2s forwards;
-    }
-    .hero h1 {
-      font-family: var(--font-display);
-      font-size: clamp(3.5rem, 9vw, 8rem);
-      line-height: 0.95;
-      letter-spacing: 2px;
-      margin-bottom: 2rem;
-      opacity: 0; animation: fadeUp 0.6s 0.4s forwards;
-    }
-    .hero h1 .accent { color: var(--accent); }
-    .hero h1 .accent2 { color: var(--accent2); }
-    .hero-desc {
-      max-width: 540px;
-      color: var(--muted);
-      font-size: 1.05rem;
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
-      opacity: 0; animation: fadeUp 0.6s 0.6s forwards;
-    }
-    .hero-btns {
-      display: flex; gap: 1rem; flex-wrap: wrap;
-      opacity: 0; animation: fadeUp 0.6s 0.8s forwards;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #080c10;
-      border: none; border-radius: 4px;
-      padding: 0.85rem 2rem;
-      font-family: var(--font-body);
-      font-weight: 700; font-size: 0.95rem;
-      cursor: pointer; text-decoration: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-      display: inline-block;
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,160,0.3); }
-    .btn-outline {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 0.85rem 2rem;
-      font-family: var(--font-body);
-      font-weight: 500; font-size: 0.95rem;
-      cursor: pointer; text-decoration: none;
-      transition: border-color 0.2s, color 0.2s;
-      display: inline-block;
-    }
-    .btn-outline:hover { border-color: var(--accent2); color: var(--accent2); }
+/* STATS */
+.stats{background:var(--surface);border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);padding:4rem 1.5rem;
+  display:flex;justify-content:center;gap:0;position:relative;z-index:1}
+.stat{flex:1;max-width:220px;text-align:center;
+  border-right:1px solid var(--border);padding:1rem}
+.stat:last-child{border-right:none}
+.stat-num{font-size:2.5rem;font-weight:700;color:var(--accent);
+  font-family:var(--mono);letter-spacing:-1px}
+.stat-lbl{font-size:0.8rem;color:var(--muted);margin-top:4px;font-weight:500}
 
-    /* TICKER */
-    .ticker-wrap {
-      width: 100%; overflow: hidden;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      padding: 0.6rem 0;
-      position: relative; z-index: 1;
-    }
-    .ticker {
-      display: flex; gap: 4rem;
-      animation: tickerScroll 30s linear infinite;
-      width: max-content;
-    }
-    .ticker-item {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      white-space: nowrap;
-      display: flex; gap: 0.5rem;
-    }
-    .ticker-sym { color: var(--text); font-weight: 700; }
-    .ticker-price { color: var(--muted); }
-    .ticker-up { color: var(--accent); }
-    .ticker-down { color: var(--warn); }
+/* HOW IT WORKS */
+.how{max-width:900px;margin:6rem auto;padding:0 1.5rem;position:relative;z-index:1}
+.steps{display:flex;flex-direction:column;gap:1px;margin-top:2.5rem}
+.step{display:grid;grid-template-columns:56px 1fr;gap:1.5rem;
+  background:var(--card);border:1px solid var(--border);
+  padding:1.5rem;border-radius:12px;margin-bottom:8px;
+  transition:border-color .2s}
+.step:hover{border-color:rgba(0,212,170,0.4)}
+.step-num{width:40px;height:40px;border-radius:10px;
+  background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);
+  color:var(--accent);font-family:var(--mono);font-size:0.85rem;font-weight:600;
+  display:flex;align-items:center;justify-content:center}
+.step-title{font-weight:600;font-size:1rem;margin-bottom:4px}
+.step-desc{font-size:0.875rem;color:var(--muted);line-height:1.6}
 
-    /* STATS STRIP */
-    .stats-strip {
-      display: flex; gap: 0;
-      max-width: 1200px; margin: 4rem auto;
-      padding: 0 2.5rem;
-      position: relative; z-index: 1;
-    }
-    .stat-block {
-      flex: 1;
-      padding: 2rem;
-      border: 1px solid var(--border);
-      background: var(--card);
-      text-align: center;
-    }
-    .stat-block:not(:last-child) { border-right: none; }
-    .stat-num {
-      font-family: var(--font-display);
-      font-size: 3.5rem;
-      color: var(--accent);
-      line-height: 1;
-    }
-    .stat-label {
-      color: var(--muted);
-      font-size: 0.8rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 0.5rem;
-    }
+/* CTA */
+.cta{text-align:center;padding:6rem 1.5rem;position:relative;z-index:1}
+.cta-box{max-width:600px;margin:0 auto;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:3.5rem 2rem}
+.cta-box h2{font-size:2rem;font-weight:700;letter-spacing:-1px;margin-bottom:1rem}
+.cta-box p{color:var(--muted);margin-bottom:2rem;line-height:1.6}
 
-    /* MODULES SECTION */
-    .section {
-      max-width: 1200px; margin: 0 auto;
-      padding: 5rem 2.5rem;
-      position: relative; z-index: 1;
-    }
-    .section-tag {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--accent2);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-    .section-title {
-      font-family: var(--font-display);
-      font-size: clamp(2.5rem, 5vw, 4.5rem);
-      letter-spacing: 1px;
-      margin-bottom: 3rem;
-    }
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:1.5rem;
+  text-align:center;color:var(--muted);font-size:0.8rem;position:relative;z-index:1}
 
-    .modules-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-    }
-    .module-card {
-      background: var(--card);
-      padding: 2.5rem;
-      transition: background 0.2s;
-    }
-    .module-card:hover { background: #162030; }
-    .module-num {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 2px;
-      margin-bottom: 1.2rem;
-    }
-    .module-icon {
-      font-size: 2rem;
-      margin-bottom: 1rem;
-    }
-    .module-title {
-      font-family: var(--font-body);
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-bottom: 0.8rem;
-    }
-    .module-desc {
-      color: var(--muted);
-      font-size: 0.9rem;
-      line-height: 1.7;
-    }
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-    /* ARCHITECTURE */
-    .arch-section {
-      max-width: 1200px; margin: 0 auto;
-      padding: 5rem 2.5rem;
-      position: relative; z-index: 1;
-    }
-    .arch-layers {
-      display: flex; flex-direction: column; gap: 4px;
-      margin-top: 3rem;
-    }
-    .arch-layer {
-      display: flex; align-items: center; gap: 1.5rem;
-      padding: 1.2rem 2rem;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      transition: transform 0.2s, border-color 0.2s;
-    }
-    .arch-layer:nth-child(2) { border-left-color: var(--accent2); }
-    .arch-layer:nth-child(3) { border-left-color: #a855f7; }
-    .arch-layer:nth-child(4) { border-left-color: var(--warn); }
-    .arch-layer:nth-child(5) { border-left-color: #facc15; }
-    .arch-layer:hover { transform: translateX(6px); }
-    .arch-layer-num {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--muted);
-      min-width: 60px;
-    }
-    .arch-layer-name {
-      font-weight: 600;
-      font-size: 1rem;
-      min-width: 220px;
-    }
-    .arch-layer-desc { color: var(--muted); font-size: 0.88rem; }
-
-    /* ADVANTAGES */
-    .adv-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 3rem;
-    }
-    .adv-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 1.8rem;
-      border-radius: 4px;
-      text-align: center;
-      transition: border-color 0.2s, transform 0.2s;
-    }
-    .adv-card:hover { border-color: var(--accent); transform: translateY(-4px); }
-    .adv-icon { font-size: 2rem; margin-bottom: 0.8rem; }
-    .adv-label { font-size: 0.9rem; font-weight: 600; }
-
-    /* TEAM */
-    .team-grid {
-      display: flex; gap: 1.5rem; flex-wrap: wrap;
-      margin-top: 3rem;
-    }
-    .team-card {
-      flex: 1; min-width: 220px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 2rem;
-    }
-    .team-id {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 2px;
-      margin-bottom: 0.5rem;
-    }
-    .team-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-    }
-
-    /* FOOTER */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 2rem 2.5rem;
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.82rem;
-      position: relative; z-index: 1;
-    }
-
-    /* ANIMATIONS */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-
-    /* RESPONSIVE */
-    @media (max-width: 640px) {
-      nav { padding: 1rem; }
-      .nav-links { display: none; }
-      .hero { padding: 6rem 1.2rem 3rem; }
-      .stats-strip { flex-direction: column; }
-      .stat-block:not(:last-child) { border-right: 1px solid var(--border); border-bottom: none; }
-      .section, .arch-section { padding: 3rem 1.2rem; }
-    }
-  </style>
+/* MOBILE NAV */
+@media(max-width:640px){
+  .nav-links{display:none}
+  .hero h1{letter-spacing:-1px}
+  .stats{flex-wrap:wrap}
+  .stat{border-right:none;border-bottom:1px solid var(--border)}
+}
+</style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav>
-  <div class="logo">STOCK<span>ALERT</span></div>
+  <a class="nav-logo" href="index.html">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 9-9"/></svg>
+    </div>
+    <span class="logo-text">Stock<span>Pulse</span></span>
+  </a>
   <div class="nav-links">
-    <a href="#modules">Modules</a>
-    <a href="#architecture">Architecture</a>
-    <a href="#team">Team</a>
-    <a href="pages/login.html" class="nav-cta">Login</a>
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+  </div>
+  <div class="nav-actions">
+    <a class="btn-ghost" href="pages/login.html">Sign in</a>
+    <a class="btn-primary" href="pages/register.html">Get started</a>
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
-  <div class="hero-tag">// Real-Time Financial Intelligence System</div>
-  <h1>MONITOR.<br><span class="accent">ALERT.</span><br><span class="accent2">PROFIT.</span></h1>
-  <p class="hero-desc">
-    A full-stack stock price monitoring system that tracks live market data, fires instant alerts when your target prices are hit, and helps investors make smarter, faster decisions.
-  </p>
+  <div class="hero-badge"><span class="dot-live"></span>Live market tracking</div>
+  <h1>Never miss a<br>market move<br><em>ever again.</em></h1>
+  <p class="hero-sub">Set price alerts for any stock. Get instant notifications — in app, email, or SMS — the moment your target is hit.</p>
   <div class="hero-btns">
-    <a href="pages/register.html" class="btn-primary">Get Started →</a>
-    <a href="pages/dashboard.html" class="btn-outline">View Dashboard</a>
+    <a class="btn-primary" href="pages/register.html">Start for free</a>
+    <a class="btn-ghost" href="pages/login.html">Sign in</a>
   </div>
 </section>
 
-<!-- TICKER -->
-<div class="ticker-wrap">
-  <div class="ticker" id="ticker"></div>
+<div class="ticker-bar">
+  <div class="ticker-track" id="ticker"></div>
 </div>
 
-<!-- STATS STRIP -->
-<div class="stats-strip">
-  <div class="stat-block">
-    <div class="stat-num">5</div>
-    <div class="stat-label">Core Modules</div>
-  </div>
-  <div class="stat-block">
-    <div class="stat-num">LIVE</div>
-    <div class="stat-label">Market Data</div>
-  </div>
-  <div class="stat-block">
-    <div class="stat-num">3</div>
-    <div class="stat-label">Alert Channels</div>
-  </div>
-  <div class="stat-block">
-    <div class="stat-num">100%</div>
-    <div class="stat-label">Firebase Backed</div>
-  </div>
-</div>
+<section class="stats">
+  <div class="stat"><div class="stat-num">60/m</div><div class="stat-lbl">Live API calls</div></div>
+  <div class="stat"><div class="stat-num">&lt;1s</div><div class="stat-lbl">Alert response</div></div>
+  <div class="stat"><div class="stat-num">3</div><div class="stat-lbl">Alert channels</div></div>
+  <div class="stat"><div class="stat-num">∞</div><div class="stat-lbl">Stocks trackable</div></div>
+</section>
 
-<!-- MODULES -->
-<section class="section" id="modules">
-  <div class="section-tag">// 01 — System Modules</div>
-  <h2 class="section-title">PROJECT<br>MODULES</h2>
-  <div class="modules-grid">
-    <div class="module-card">
-      <div class="module-num">MODULE 01</div>
-      <div class="module-icon">👤</div>
-      <div class="module-title">User Management</div>
-      <div class="module-desc">Secure registration and login with Firebase Authentication. Profile management and role-based access control to protect sensitive data.</div>
+<section class="features" id="features">
+  <div class="section-label">Features</div>
+  <h2 class="section-title">Everything you need<br>to invest smarter</h2>
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+      <div class="feat-title">Real-time price feed</div>
+      <div class="feat-desc">Live stock data from Finnhub API, refreshed every 30 seconds for every stock in your watchlist.</div>
     </div>
-    <div class="module-card">
-      <div class="module-num">MODULE 02</div>
-      <div class="module-icon">📈</div>
-      <div class="module-title">Stock Monitoring</div>
-      <div class="module-desc">Fetches live stock prices via Market API. Displays real-time trends and continuously refreshes prices so investors never miss a movement.</div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+      <div class="feat-title">Instant price alerts</div>
+      <div class="feat-desc">Set a target price — above or below. Get notified the moment the market crosses your threshold.</div>
     </div>
-    <div class="module-card">
-      <div class="module-num">MODULE 03</div>
-      <div class="module-icon">🔔</div>
-      <div class="module-title">Alert Management</div>
-      <div class="module-desc">Set custom target prices for any stock. Triggers instant alerts when price conditions are met — supports Email, SMS, and Push notifications.</div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></svg></div>
+      <div class="feat-title">Mobile push alerts</div>
+      <div class="feat-desc">Browser push notifications work on mobile too — no app install needed. Alerts reach you anywhere.</div>
     </div>
-    <div class="module-card">
-      <div class="module-num">MODULE 04</div>
-      <div class="module-icon">🗄️</div>
-      <div class="module-title">Database Management</div>
-      <div class="module-desc">Firebase Realtime Database stores user details, watchlists, and complete alert history using relational keys for fast lookups.</div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <div class="feat-title">Secure authentication</div>
+      <div class="feat-desc">Sign in with Google or email. Firebase-backed with encrypted data per user — nobody else sees your alerts.</div>
     </div>
-    <div class="module-card">
-      <div class="module-num">MODULE 05</div>
-      <div class="module-icon">📡</div>
-      <div class="module-title">Notification System</div>
-      <div class="module-desc">Multi-channel notification delivery — Email, SMS, and in-app — ensures timely updates for both price increases and decreases.</div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg></div>
+      <div class="feat-title">Firebase cloud storage</div>
+      <div class="feat-desc">Your watchlist and alert history sync instantly across all devices via Firebase Realtime Database.</div>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon"><svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+      <div class="feat-title">Price trend display</div>
+      <div class="feat-desc">See price movement direction, percentage change, and volume at a glance on your dashboard.</div>
     </div>
   </div>
 </section>
 
-<!-- ARCHITECTURE -->
-<section class="arch-section" id="architecture">
-  <div class="section-tag">// 02 — System Design</div>
-  <h2 class="section-title">PROPOSED<br>ARCHITECTURE</h2>
-  <div class="arch-layers">
-    <div class="arch-layer">
-      <div class="arch-layer-num">LAYER 01</div>
-      <div class="arch-layer-name">User Interface Layer</div>
-      <div class="arch-layer-desc">HTML / CSS / JavaScript frontend hosted on GitHub Pages</div>
+<section class="how" id="how">
+  <div class="section-label">How it works</div>
+  <h2 class="section-title">Up and running<br>in 3 steps</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div>
+        <div class="step-title">Create your account</div>
+        <div class="step-desc">Sign up with email or continue with Google. Your account is secured with Firebase Authentication.</div>
+      </div>
     </div>
-    <div class="arch-layer">
-      <div class="arch-layer-num">LAYER 02</div>
-      <div class="arch-layer-name">Application Processing Layer</div>
-      <div class="arch-layer-desc">Business logic, alert engine, and data processing via Firebase Functions</div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div>
+        <div class="step-title">Search and watch stocks</div>
+        <div class="step-desc">Add any stock symbol to your watchlist. Live prices update automatically from the market feed.</div>
+      </div>
     </div>
-    <div class="arch-layer">
-      <div class="arch-layer-num">LAYER 03</div>
-      <div class="arch-layer-name">Stock API Integration</div>
-      <div class="arch-layer-desc">Real-time price feeds from Alpha Vantage / Yahoo Finance / Finnhub API</div>
-    </div>
-    <div class="arch-layer">
-      <div class="arch-layer-num">LAYER 04</div>
-      <div class="arch-layer-name">Database Layer</div>
-      <div class="arch-layer-desc">Firebase Realtime Database & Firestore — Users, Stocks, Alerts, Transactions</div>
-    </div>
-    <div class="arch-layer">
-      <div class="arch-layer-num">LAYER 05</div>
-      <div class="arch-layer-name">Notification System</div>
-      <div class="arch-layer-desc">Email (SMTP), SMS (Twilio), Push via Firebase Cloud Messaging</div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div>
+        <div class="step-title">Set your price alert</div>
+        <div class="step-desc">Choose a target price and condition (above or below). Receive an instant notification when triggered — on your phone, browser, or email.</div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ADVANTAGES -->
-<section class="section">
-  <div class="section-tag">// 03 — Why StockAlert Pro</div>
-  <h2 class="section-title">ADVANTAGES</h2>
-  <div class="adv-grid">
-    <div class="adv-card">
-      <div class="adv-icon">⚡</div>
-      <div class="adv-label">Real-time Monitoring</div>
-    </div>
-    <div class="adv-card">
-      <div class="adv-icon">🔔</div>
-      <div class="adv-label">Instant Alerts</div>
-    </div>
-    <div class="adv-card">
-      <div class="adv-icon">🛡️</div>
-      <div class="adv-label">Reduces Risk</div>
-    </div>
-    <div class="adv-card">
-      <div class="adv-icon">🎯</div>
-      <div class="adv-label">Easy to Use</div>
-    </div>
-    <div class="adv-card">
-      <div class="adv-icon">🧠</div>
-      <div class="adv-label">Smart Investing</div>
-    </div>
+<section class="cta">
+  <div class="cta-box">
+    <h2>Start tracking the market today</h2>
+    <p>Free to use. No credit card required. Alerts start working the moment you sign up.</p>
+    <a class="btn-primary" href="pages/register.html" style="padding:.85rem 2.5rem;font-size:1rem">Create free account</a>
   </div>
 </section>
 
-<!-- TEAM -->
-<section class="section" id="team">
-  <div class="section-tag">// 04 — Team</div>
-  <h2 class="section-title">TEAM<br>MEMBERS</h2>
-  <div class="team-grid">
-    <div class="team-card">
-      <div class="team-id">2403811710621033</div>
-      <div class="team-name">Giriraj N</div>
-    </div>
-    <div class="team-card">
-      <div class="team-id">2403811710621034</div>
-      <div class="team-name">Gokulnath R</div>
-    </div>
-    <div class="team-card">
-      <div class="team-id">2403811710621037</div>
-      <div class="team-name">Gurusaeth B</div>
-    </div>
-  </div>
-</section>
-
-<footer>
-  <p>© 2025 StockAlert Pro — Real Time Stock Price Monitoring and Alert System</p>
-  <p style="margin-top:0.4rem;">Built with Firebase + GitHub Pages</p>
-</footer>
+<footer>© 2025 StockPulse · Built with Firebase + GitHub Pages</footer>
 
 <script>
-  // Demo ticker data
-  const stocks = [
-    { sym: 'AAPL', price: '189.42', chg: '+1.23%', up: true },
-    { sym: 'TSLA', price: '248.11', chg: '-0.87%', up: false },
-    { sym: 'GOOGL', price: '171.95', chg: '+0.54%', up: true },
-    { sym: 'MSFT', price: '415.20', chg: '+2.01%', up: true },
-    { sym: 'AMZN', price: '192.50', chg: '-1.10%', up: false },
-    { sym: 'NFLX', price: '650.33', chg: '+3.22%', up: true },
-    { sym: 'META', price: '519.88', chg: '+0.95%', up: true },
-    { sym: 'NVDA', price: '875.20', chg: '-2.30%', up: false },
-  ];
-  const ticker = document.getElementById('ticker');
-  const doubled = [...stocks, ...stocks]; // duplicate for seamless scroll
-  doubled.forEach(s => {
-    const el = document.createElement('span');
-    el.className = 'ticker-item';
-    el.innerHTML = `<span class="ticker-sym">${s.sym}</span><span class="ticker-price">$${s.price}</span><span class="${s.up ? 'ticker-up' : 'ticker-down'}">${s.chg}</span>`;
-    ticker.appendChild(el);
-  });
+const DEMO=[
+  {sym:'AAPL',price:189.42,chg:'+1.23%',up:true},{sym:'TSLA',price:248.11,chg:'-0.87%',up:false},
+  {sym:'GOOGL',price:171.95,chg:'+0.54%',up:true},{sym:'MSFT',price:415.20,chg:'+2.01%',up:true},
+  {sym:'AMZN',price:192.50,chg:'-1.10%',up:false},{sym:'NVDA',price:875.20,chg:'-2.30%',up:false},
+  {sym:'META',price:519.88,chg:'+0.95%',up:true},{sym:'NFLX',price:650.33,chg:'+3.22%',up:true},
+  {sym:'AMD',price:162.44,chg:'+1.67%',up:true},{sym:'INTC',price:31.20,chg:'-0.45%',up:false},
+];
+const t=document.getElementById('ticker');
+[...DEMO,...DEMO].forEach(s=>{
+  const el=document.createElement('span');
+  el.className='ticker-item';
+  el.innerHTML=`<span class="t-sym">${s.sym}</span><span class="t-price">$${s.price}</span><span class="${s.up?'t-up':'t-dn'}">${s.chg}</span>`;
+  t.appendChild(el);
+});
 </script>
 </body>
 </html>

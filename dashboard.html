@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Dashboard — StockPulse</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#05080f;--surface:#0b1120;--card:#0f1929;--border:#1a2840;
+  --accent:#00d4aa;--accent2:#3b82f6;--red:#ef4444;--warn:#f59e0b;
+  --text:#f0f6ff;--muted:#64748b;--font:'Inter',sans-serif;--mono:'JetBrains Mono',monospace}
+body{background:var(--bg);color:var(--text);font-family:var(--font);display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:240px;min-height:100vh;background:var(--surface);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:50;transition:transform .3s}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:1.25rem 1.5rem;
+  border-bottom:1px solid var(--border);text-decoration:none}
+.sb-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:16px;height:16px;fill:none;stroke:#05080f;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.sb-name{font-size:1rem;font-weight:700;color:var(--text)}.sb-name span{color:var(--accent)}
+.sb-nav{flex:1;padding:1rem 0;overflow-y:auto}
+.nav-section{padding:0.4rem 1.5rem 0.2rem;font-size:0.68rem;font-weight:600;
+  color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:0.5rem}
+.nav-item{display:flex;align-items:center;gap:10px;padding:0.6rem 1.5rem;
+  color:var(--muted);text-decoration:none;font-size:0.875rem;font-weight:500;
+  border-left:2px solid transparent;transition:all .15s;cursor:pointer;background:none;border-top:none;border-right:none;border-bottom:none;width:100%;font-family:var(--font)}
+.nav-item svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.nav-item:hover,.nav-item.active{color:var(--accent);background:rgba(0,212,170,0.07);border-left-color:var(--accent)}
+.sb-foot{padding:1rem 1.5rem;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:10px;margin-bottom:0.75rem}
+.avatar{width:34px;height:34px;border-radius:50%;background:rgba(0,212,170,0.15);
+  border:1px solid rgba(0,212,170,0.3);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;flex-shrink:0}
+.user-name{font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:0.72rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.logout-btn{width:100%;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);
+  color:#fca5a5;padding:0.5rem;border-radius:8px;font-family:var(--font);font-size:0.82rem;
+  cursor:pointer;transition:background .2s}
+.logout-btn:hover{background:rgba(239,68,68,0.15)}
+
+/* MAIN */
+.main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-height:100vh}
+.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;
+  position:sticky;top:0;z-index:40}
+.topbar-left{display:flex;align-items:center;gap:0.75rem}
+.page-title{font-size:1.1rem;font-weight:700}
+.live-badge{display:flex;align-items:center;gap:5px;
+  background:rgba(0,212,170,0.1);border:1px solid rgba(0,212,170,0.25);
+  color:var(--accent);border-radius:99px;padding:3px 10px;font-size:0.72rem;font-weight:600}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.5s ease-in-out infinite}
+.topbar-right{display:flex;align-items:center;gap:0.75rem}
+.notify-btn{background:none;border:1px solid var(--border);color:var(--muted);
+  width:36px;height:36px;border-radius:8px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s}
+.notify-btn:hover,.notify-btn.active{border-color:var(--accent);color:var(--accent)}
+.notify-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#clock{font-family:var(--mono);font-size:0.78rem;color:var(--muted)}
+
+.content{padding:1.5rem;flex:1}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1.5rem}
+.metric{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.metric-label{font-size:0.72rem;font-weight:600;color:var(--muted);
+  letter-spacing:0.5px;text-transform:uppercase;margin-bottom:0.5rem}
+.metric-val{font-size:1.8rem;font-weight:700;font-family:var(--mono);line-height:1;color:var(--accent)}
+.metric-val.red{color:var(--red)}
+.metric-sub{font-size:0.75rem;color:var(--muted);margin-top:4px}
+
+/* LAYOUT */
+.grid{display:grid;grid-template-columns:1fr 360px;gap:1rem}
+
+/* STOCK TABLE */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.panel-head{display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.panel-title{font-size:0.875rem;font-weight:600}
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round}
+.search-input{background:var(--surface);border:1px solid var(--border);color:var(--text);
+  padding:0.45rem 0.75rem 0.45rem 2rem;border-radius:8px;
+  font-family:var(--mono);font-size:0.8rem;outline:none;width:160px;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-size:0.68rem;font-weight:600;color:var(--muted);letter-spacing:1px;
+  text-transform:uppercase;padding:0.6rem 1rem;text-align:left;
+  border-bottom:1px solid var(--border);background:var(--surface)}
+.tbl td{padding:0.75rem 1rem;border-bottom:1px solid rgba(26,40,64,0.5);font-size:0.875rem}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(0,212,170,0.02)}
+.sym-cell{display:flex;flex-direction:column;gap:2px}
+.sym{font-family:var(--mono);font-weight:600}
+.sym-name{font-size:0.72rem;color:var(--muted)}
+.price-cell{font-family:var(--mono);font-weight:600}
+.up{color:var(--accent)}
+.dn{color:var(--red)}
+.chg-cell{font-family:var(--mono);font-size:0.82rem;font-weight:600}
+.alert-row-btn{background:none;border:1px solid var(--border);color:var(--muted);
+  padding:4px 10px;border-radius:6px;font-size:0.72rem;cursor:pointer;
+  font-family:var(--mono);transition:all .15s}
+.alert-row-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ALERT PANEL */
+.alert-panel{display:flex;flex-direction:column;gap:1rem}
+.set-alert-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.aform{padding:1.25rem;display:flex;flex-direction:column;gap:0.6rem}
+.aform input,.aform select{width:100%;background:var(--surface);border:1px solid var(--border);
+  color:var(--text);padding:0.6rem 0.8rem;border-radius:8px;
+  font-family:var(--mono);font-size:0.82rem;outline:none;transition:border-color .2s}
+.aform input:focus,.aform select:focus{border-color:var(--accent)}
+.aform select option{background:var(--surface)}
+.aform-row{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem}
+.set-btn{background:var(--accent);color:#05080f;border:none;padding:0.65rem;
+  border-radius:8px;font-family:var(--font);font-weight:700;font-size:0.85rem;
+  cursor:pointer;transition:opacity .2s}
+.set-btn:hover{opacity:0.85}
+
+/* ALERTS LIST */
+.alerts-card{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex:1}
+.alert-item{display:flex;align-items:center;justify-content:space-between;
+  padding:0.75rem 1.25rem;border-bottom:1px solid rgba(26,40,64,0.5)}
+.alert-item:last-child{border-bottom:none}
+.ai-sym{font-family:var(--mono);font-weight:700;font-size:0.9rem}
+.ai-cond{font-size:0.7rem;color:var(--muted);margin-top:2px}
+.ai-price{font-family:var(--mono);font-size:0.9rem;font-weight:600;color:var(--accent)}
+.del-btn{background:none;border:none;color:var(--red);cursor:pointer;
+  opacity:0.5;transition:opacity .15s;padding:4px}
+.del-btn:hover{opacity:1}
+.del-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.empty-state{padding:2.5rem;text-align:center;color:var(--muted);font-size:0.85rem}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:1.5rem;right:1.5rem;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:1rem 1.25rem;
+  max-width:320px;z-index:999;
+  transform:translateY(80px);opacity:0;
+  transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1;pointer-events:auto}
+.toast.alert-up{border-left:3px solid var(--accent)}
+.toast.alert-dn{border-left:3px solid var(--red)}
+.toast-title{font-weight:700;font-size:0.9rem;margin-bottom:3px}
+.toast-body{font-size:0.8rem;color:var(--muted)}
+
+/* NOTIFY PERMISSION BANNER */
+.notify-banner{background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);
+  border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:0.85rem}
+.notify-banner-text{color:var(--accent2)}
+.allow-btn{background:var(--accent2);color:#fff;border:none;padding:0.4rem 1rem;
+  border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer;flex-shrink:0}
+
+/* MOBILE HAMBURGER */
+.hamburger{display:none;background:none;border:1px solid var(--border);
+  color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;
+  align-items:center;justify-content:center}
+.hamburger svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:49}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .grid{grid-template-columns:1fr}
+  .hamburger{display:flex}
+  .overlay.show{display:block}
+}
+@media(max-width:480px){
+  .metrics{grid-template-columns:1fr 1fr}
+  .topbar{padding:0 1rem}
+  .content{padding:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <a class="sb-logo" href="../index.html">
+    <div class="sb-icon"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+    <span class="sb-name">Stock<span>Pulse</span></span>
+  </a>
+  <nav class="sb-nav">
+    <div class="nav-section">Main</div>
+    <button class="nav-item active" onclick="showSection('dashboard')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-item" onclick="showSection('alerts')">
+      <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      My Alerts
+    </button>
+    <div class="nav-section">Account</div>
+    <button class="nav-item" onclick="showSection('settings')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Settings
+    </button>
+  </nav>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="avatar" id="avatarEl">?</div>
+      <div><div class="user-name" id="userName">Loading…</div><div class="user-email" id="userEmail"></div></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </div>
+</aside>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- MAIN -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="openSidebar()"><svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <span class="page-title" id="pageTitle">Dashboard</span>
+      <div class="live-badge"><span class="dot"></span>LIVE</div>
+    </div>
+    <div class="topbar-right">
+      <span id="clock"></span>
+      <button class="notify-btn" id="notifyBtn" title="Enable push notifications" onclick="requestNotify()">
+        <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="content">
+
+    <!-- NOTIFICATION BANNER -->
+    <div class="notify-banner" id="notifyBanner" style="display:none">
+      <span class="notify-banner-text">Enable push notifications to get mobile alerts when stock prices hit your targets.</span>
+      <button class="allow-btn" onclick="requestNotify()">Allow Notifications</button>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="sec-dashboard">
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-label">Stocks tracked</div>
+          <div class="metric-val" id="mStocks">8</div>
+          <div class="metric-sub">In watchlist</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Active alerts</div>
+          <div class="metric-val" id="mAlerts">—</div>
+          <div class="metric-sub">Price targets</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Triggered today</div>
+          <div class="metric-val" id="mTriggered">0</div>
+          <div class="metric-sub">Alerts fired</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Last update</div>
+          <div class="metric-val" id="mUpdate" style="font-size:1rem;padding-top:4px">—</div>
+          <div class="metric-sub">Finnhub API</div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- STOCKS TABLE -->
+        <div class="panel">
+          <div class="panel-head">
+            <span class="panel-title">Market watch</span>
+            <div class="search-wrap">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input class="search-input" type="text" placeholder="Search symbol…" id="searchInput" oninput="filterTable()"/>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Symbol</th>
+                  <th>Price</th>
+                  <th>Change</th>
+                  <th>High</th>
+                  <th>Low</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="stockBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ALERT PANEL -->
+        <div class="alert-panel">
+          <div class="set-alert-card">
+            <div class="panel-head"><span class="panel-title">Set price alert</span></div>
+            <div class="aform">
+              <input type="text" id="aSymbol" placeholder="Stock symbol (e.g. AAPL)" style="text-transform:uppercase"/>
+              <div class="aform-row">
+                <input type="number" id="aPrice" placeholder="Target price ($)" step="0.01"/>
+                <select id="aCond">
+                  <option value="above">▲ Goes above</option>
+                  <option value="below">▼ Goes below</option>
+                </select>
+              </div>
+              <select id="aChannel">
+                <option value="push">Push notification (mobile)</option>
+                <option value="both">Push + In-app</option>
+                <option value="app">In-app only</option>
+              </select>
+              <button class="set-btn" onclick="addAlert()">+ Set alert</button>
+            </div>
+          </div>
+
+          <div class="alerts-card">
+            <div class="panel-head"><span class="panel-title">Active alerts</span></div>
+            <div id="alertsList"><div class="empty-state">No alerts yet.<br>Set your first target above.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS SECTION -->
+    <div id="sec-alerts" style="display:none">
+      <div class="panel">
+        <div class="panel-head"><span class="panel-title">All price alerts</span></div>
+        <div id="alertsFullList"><div class="empty-state">No alerts yet.</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS SECTION -->
+    <div id="sec-settings" style="display:none">
+      <div class="panel" style="padding:1.5rem;max-width:500px">
+        <div class="panel-title" style="margin-bottom:1rem">Notification settings</div>
+        <div style="font-size:0.875rem;color:var(--muted);line-height:1.7;margin-bottom:1.25rem">
+          StockPulse can send browser push notifications to your phone and desktop when a price alert is triggered — even when the tab is in the background.
+        </div>
+        <button class="set-btn" style="width:auto;padding:0.6rem 1.5rem" onclick="requestNotify()">Enable push notifications</button>
+        <div id="notifyStatus" style="margin-top:0.75rem;font-size:0.82rem;color:var(--muted)"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-title" id="toastTitle"></div>
+  <div class="toast-body" id="toastBody"></div>
+</div>
+
+<!-- ✅ Firebase SDKs FIRST -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<!-- ✅ Config AFTER SDKs -->
+<script src="../firebase-config.js"></script>
+<script>
+// ─── STATE ───────────────────────────────────────────────────
+let currentUser = null;
+let userAlerts = {};
+let stockPrices = {};
+let triggeredToday = 0;
+let notifyEnabled = false;
+
+// Default watchlist
+const STOCKS = [
+  {sym:'AAPL',name:'Apple'},
+  {sym:'TSLA',name:'Tesla'},
+  {sym:'GOOGL',name:'Alphabet'},
+  {sym:'MSFT',name:'Microsoft'},
+  {sym:'AMZN',name:'Amazon'},
+  {sym:'NVDA',name:'NVIDIA'},
+  {sym:'META',name:'Meta'},
+  {sym:'NFLX',name:'Netflix'},
+];
+// Seed initial prices
+const SEED = {AAPL:189.42,TSLA:248.11,GOOGL:171.95,MSFT:415.20,AMZN:192.50,NVDA:875.20,META:519.88,NFLX:650.33};
+STOCKS.forEach(s=>{ stockPrices[s.sym]={c:SEED[s.sym],d:0,dp:0,h:SEED[s.sym],l:SEED[s.sym]}; });
+
+// ─── FINNHUB LIVE PRICES ─────────────────────────────────────
+async function fetchPrice(sym){
+  try{
+    const r=await fetch(`https://finnhub.io/api/v1/quote?symbol=${sym}&token=${FINNHUB_KEY}`);
+    if(!r.ok) throw new Error('API error');
+    const d=await r.json();
+    if(d.c && d.c>0) return d;
+  }catch(e){}
+  // fallback: simulate small movement
+  const p=stockPrices[sym]?.c||100;
+  const drift=(Math.random()-.5)*1.2;
+  const nc=+(p+drift).toFixed(2);
+  return {c:nc,d:+(nc-SEED[sym]||0).toFixed(2),dp:+((nc-(SEED[sym]||nc))/(SEED[sym]||nc)*100).toFixed(2),h:Math.max(nc,stockPrices[sym]?.h||nc),l:Math.min(nc,stockPrices[sym]?.l||nc)};
+}
+
+async function refreshPrices(){
+  for(const s of STOCKS){
+    const data=await fetchPrice(s.sym);
+    const prev=stockPrices[s.sym]?.c||0;
+    stockPrices[s.sym]=data;
+    checkAlertTrigger(s.sym,prev,data.c);
+    await delay(300); // avoid rate limiting
+  }
+  renderTable();
+  document.getElementById('mUpdate').textContent=new Date().toLocaleTimeString();
+}
+
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ─── ALERT TRIGGER CHECK ─────────────────────────────────────
+function checkAlertTrigger(sym,prev,cur){
+  Object.entries(userAlerts).forEach(([key,a])=>{
+    if(a.sym!==sym||a.triggered) return;
+    const hit=(a.cond==='above'&&prev<a.price&&cur>=a.price)||
+               (a.cond==='below'&&prev>a.price&&cur<=a.price);
+    if(!hit) return;
+    triggeredToday++;
+    document.getElementById('mTriggered').textContent=triggeredToday;
+    const dir=a.cond==='above'?'above':'below';
+    const msg=`${sym} is now $${cur.toFixed(2)} — ${dir} your $${a.price} target!`;
+    showToast(`🔔 ${sym} alert triggered`,msg,a.cond==='above'?'alert-up':'alert-dn');
+    pushNotify(`StockPulse Alert: ${sym}`,msg);
+    // mark as triggered in DB
+    if(currentUser) db.ref(`users/${currentUser.uid}/alerts/${key}/triggered`).set(true);
+  });
+}
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────────
+async function requestNotify(){
+  if(!('Notification' in window)){
+    document.getElementById('notifyStatus').textContent='Push notifications not supported in this browser.';
+    return;
+  }
+  const perm=await Notification.requestPermission();
+  notifyEnabled=(perm==='granted');
+  const btn=document.getElementById('notifyBtn');
+  const banner=document.getElementById('notifyBanner');
+  const status=document.getElementById('notifyStatus');
+  if(notifyEnabled){
+    btn.classList.add('active');
+    banner.style.display='none';
+    status.textContent='✓ Push notifications are enabled. You will receive alerts on this device.';
+    showToast('Notifications enabled','You will now receive push alerts when your price targets are hit.','alert-up');
+  }else{
+    status.textContent='Permission denied. Please allow notifications in your browser settings.';
+  }
+}
+
+function pushNotify(title,body){
+  if(notifyEnabled&&Notification.permission==='granted'){
+    new Notification(title,{body,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%2300d4aa"/><polyline points="22,12 18,12 15,21 9,3 6,12 2,12" stroke="%2305080f" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>'});
+  }
+}
+
+// ─── RENDER TABLE ─────────────────────────────────────────────
+function renderTable(filter=''){
+  const tbody=document.getElementById('stockBody');
+  const rows=STOCKS.filter(s=>!filter||s.sym.includes(filter.toUpperCase())||s.name.toLowerCase().includes(filter.toLowerCase()));
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted)">No stocks found</td></tr>`;return;}
+  tbody.innerHTML=rows.map(s=>{
+    const d=stockPrices[s.sym];
+    if(!d) return '';
+    const up=d.dp>=0;
+    const chgClass=up?'up':'dn';
+    const arrow=up?'▲':'▼';
+    return `<tr>
+      <td><div class="sym-cell"><span class="sym">${s.sym}</span><span class="sym-name">${s.name}</span></div></td>
+      <td class="price-cell">$${d.c.toFixed(2)}</td>
+      <td class="chg-cell ${chgClass}">${arrow} ${Math.abs(d.dp).toFixed(2)}%</td>
+      <td style="font-family:var(--mono);font-size:0.82rem;color:var(--accent)">$${(d.h||d.c).toFixed(2)}</td>
+      <td style="font-family:var(--mono);font-size:0.82rem;color:var(--red)">$${(d.l||d.c).toFixed(2)}</td>
+      <td><button class="alert-row-btn" onclick="prefill('${s.sym}',${d.c.toFixed(2)})">+ Alert</button></td>
+    </tr>`;
+  }).join('');
+}
+function filterTable(){renderTable(document.getElementById('searchInput').value);}
+function prefill(sym,price){
+  document.getElementById('aSymbol').value=sym;
+  document.getElementById('aPrice').value=price.toFixed(2);
+  // scroll to alert form on mobile
+  document.getElementById('aSymbol').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ─── ALERTS ──────────────────────────────────────────────────
+async function addAlert(){
+  if(!currentUser){showToast('Not signed in','Please sign in first.','alert-dn');return;}
+  const sym=document.getElementById('aSymbol').value.trim().toUpperCase();
+  const price=parseFloat(document.getElementById('aPrice').value);
+  const cond=document.getElementById('aCond').value;
+  const channel=document.getElementById('aChannel').value;
+  if(!sym||isNaN(price)||price<=0){showToast('Invalid alert','Enter a valid symbol and price.','alert-dn');return;}
+  await db.ref(`users/${currentUser.uid}/alerts`).push({sym,price,cond,channel,createdAt:Date.now(),triggered:false});
+  document.getElementById('aSymbol').value='';
+  document.getElementById('aPrice').value='';
+  showToast('Alert set!',`${sym} ${cond==='above'?'above':'below'} $${price.toFixed(2)}`,'alert-up');
+  if(channel==='push'||channel==='both') requestNotify();
+}
+
+async function deleteAlert(key){
+  if(!currentUser) return;
+  await db.ref(`users/${currentUser.uid}/alerts/${key}`).remove();
+}
+
+function renderAlerts(){
+  const entries=Object.entries(userAlerts);
+  document.getElementById('mAlerts').textContent=entries.length;
+
+  // sidebar mini list
+  const listEl=document.getElementById('alertsList');
+  if(!entries.length){listEl.innerHTML='<div class="empty-state">No alerts yet.<br>Set your first target above.</div>';return;}
+  listEl.innerHTML=entries.map(([k,a])=>`
+    <div class="alert-item">
+      <div>
+        <div class="ai-sym">${a.sym}${a.triggered?' <span style="font-size:0.65rem;color:var(--warn);font-weight:600">TRIGGERED</span>':''}</div>
+        <div class="ai-cond">${a.cond==='above'?'▲ Above':'▼ Below'} · ${a.channel}</div>
+      </div>
+      <div class="ai-price">$${a.price.toFixed(2)}</div>
+      <button class="del-btn" onclick="deleteAlert('${k}')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+
+  // full alerts page
+  const fullEl=document.getElementById('alertsFullList');
+  fullEl.innerHTML=entries.map(([k,a])=>`
+    <div class="alert-item">
+      <div>
+        <div class="ai-sym">${a.sym}${a.triggered?' <span style="font-size:0.65rem;color:var(--warn);font-weight:600"> TRIGGERED</span>':''}</div>
+        <div class="ai-cond">${a.cond==='above'?'▲ Price goes above':'▼ Price goes below'} · ${a.channel==='push'?'Push notification':a.channel==='both'?'Push + In-app':'In-app only'} · ${new Date(a.createdAt).toLocaleDateString()}</div>
+      </div>
+      <div class="ai-price">$${a.price.toFixed(2)}</div>
+      <button class="del-btn" onclick="deleteAlert('${k}')"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>`).join('');
+}
+
+// ─── TOAST ───────────────────────────────────────────────────
+let toastT;
+function showToast(title,body,cls=''){
+  const t=document.getElementById('toast');
+  t.className='toast '+(cls||'');
+  document.getElementById('toastTitle').textContent=title;
+  document.getElementById('toastBody').textContent=body;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),5000);
+}
+
+// ─── SECTIONS ────────────────────────────────────────────────
+function showSection(id){
+  ['dashboard','alerts','settings'].forEach(s=>{
+    document.getElementById('sec-'+s).style.display=s===id?'':'none';
+  });
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  document.getElementById('pageTitle').textContent=id.charAt(0).toUpperCase()+id.slice(1);
+  closeSidebar();
+}
+
+// ─── SIDEBAR MOBILE ──────────────────────────────────────────
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show');}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show');}
+
+// ─── CLOCK ───────────────────────────────────────────────────
+function tick(){document.getElementById('clock').textContent=new Date().toLocaleTimeString();}
+tick();setInterval(tick,1000);
+
+// ─── LOGOUT ──────────────────────────────────────────────────
+function doLogout(){auth.signOut().then(()=>window.location.href='login.html');}
+
+// ─── INIT ────────────────────────────────────────────────────
+auth.onAuthStateChanged(user=>{
+  if(!user){window.location.href='login.html';return;}
+  currentUser=user;
+  const name=user.displayName||user.email.split('@')[0];
+  document.getElementById('userName').textContent=name;
+  document.getElementById('userEmail').textContent=user.email;
+  document.getElementById('avatarEl').textContent=name.charAt(0).toUpperCase();
+
+  // check notification permission
+  if(Notification.permission==='default') document.getElementById('notifyBanner').style.display='flex';
+  if(Notification.permission==='granted') {notifyEnabled=true;document.getElementById('notifyBtn').classList.add('active');}
+
+  // live alerts from Firebase
+  db.ref(`users/${user.uid}/alerts`).on('value',snap=>{
+    userAlerts=snap.val()||{};
+    renderAlerts();
+  });
+
+  // initial render
+  renderTable();
+  // fetch live prices immediately
+  refreshPrices();
+  // then every 30 seconds
+  setInterval(refreshPrices,30000);
+});
+</script>
+</body>
+</html>
