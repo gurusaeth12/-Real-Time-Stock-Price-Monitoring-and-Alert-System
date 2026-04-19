@@ -1,18 +1,21 @@
-// Firebase is initialized AFTER SDKs load — do NOT move this above the SDK script tags
-// Replace these values with your own Firebase project config
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyABnX5__BMCYFvTL9lrFnqMFif5204BCCg",
+  authDomain: "stock-bae58.firebaseapp.com",
+  projectId: "stock-bae58",
+  storageBucket: "stock-bae58.firebasestorage.app",
+  messagingSenderId: "39423409116",
+  appId: "1:39423409116:web:394a06c9cdce5ae817ed19",
+  measurementId: "G-J64G99ZEV5"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.database();
-
-// Finnhub API key — from finnhub.io (free)
-const FINNHUB_KEY = "d7ia2lhr01qu8vfnsq3gd7ia2lhr01qu8vfnsq40";
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
