@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StockAlert Pro — Real-Time Stock Monitoring</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #080c10;
+      --surface: #0e1520;
+      --card: #121b28;
+      --border: #1e2d42;
+      --accent: #00e5a0;
+      --accent2: #0094ff;
+      --warn: #ff6b35;
+      --text: #e8f0fe;
+      --muted: #6b7e96;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+
+    /* GRID NOISE BACKGROUND */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+      background: rgba(8,12,16,0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text); }
+    .nav-links { display: flex; gap: 2rem; }
+    .nav-links a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+      background: var(--accent);
+      color: #080c10 !important;
+      padding: 0.5rem 1.2rem;
+      border-radius: 4px;
+      font-weight: 600 !important;
+    }
+
+    /* HERO */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: flex-start;
+      padding: 8rem 2.5rem 4rem;
+      position: relative; z-index: 1;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .hero-tag {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      opacity: 0; animation: fadeUp 0.6s 0.2s forwards;
+    }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: clamp(3.5rem, 9vw, 8rem);
+      line-height: 0.95;
+      letter-spacing: 2px;
+      margin-bottom: 2rem;
+      opacity: 0; animation: fadeUp 0.6s 0.4s forwards;
+    }
+    .hero h1 .accent { color: var(--accent); }
+    .hero h1 .accent2 { color: var(--accent2); }
+    .hero-desc {
+      max-width: 540px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      opacity: 0; animation: fadeUp 0.6s 0.6s forwards;
+    }
+    .hero-btns {
+      display: flex; gap: 1rem; flex-wrap: wrap;
+      opacity: 0; animation: fadeUp 0.6s 0.8s forwards;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #080c10;
+      border: none; border-radius: 4px;
+      padding: 0.85rem 2rem;
+      font-family: var(--font-body);
+      font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      display: inline-block;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,160,0.3); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.85rem 2rem;
+      font-family: var(--font-body);
+      font-weight: 500; font-size: 0.95rem;
+      cursor: pointer; text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+      display: inline-block;
+    }
+    .btn-outline:hover { border-color: var(--accent2); color: var(--accent2); }
+
+    /* TICKER */
+    .ticker-wrap {
+      width: 100%; overflow: hidden;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 0;
+      position: relative; z-index: 1;
+    }
+    .ticker {
+      display: flex; gap: 4rem;
+      animation: tickerScroll 30s linear infinite;
+      width: max-content;
+    }
+    .ticker-item {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      white-space: nowrap;
+      display: flex; gap: 0.5rem;
+    }
+    .ticker-sym { color: var(--text); font-weight: 700; }
+    .ticker-price { color: var(--muted); }
+    .ticker-up { color: var(--accent); }
+    .ticker-down { color: var(--warn); }
+
+    /* STATS STRIP */
+    .stats-strip {
+      display: flex; gap: 0;
+      max-width: 1200px; margin: 4rem auto;
+      padding: 0 2.5rem;
+      position: relative; z-index: 1;
+    }
+    .stat-block {
+      flex: 1;
+      padding: 2rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      text-align: center;
+    }
+    .stat-block:not(:last-child) { border-right: none; }
+    .stat-num {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      color: var(--accent);
+      line-height: 1;
+    }
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 0.5rem;
+    }
+
+    /* MODULES SECTION */
+    .section {
+      max-width: 1200px; margin: 0 auto;
+      padding: 5rem 2.5rem;
+      position: relative; z-index: 1;
+    }
+    .section-tag {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent2);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 4.5rem);
+      letter-spacing: 1px;
+      margin-bottom: 3rem;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+    }
+    .module-card {
+      background: var(--card);
+      padding: 2.5rem;
+      transition: background 0.2s;
+    }
+    .module-card:hover { background: #162030; }
+    .module-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 1.2rem;
+    }
+    .module-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .module-title {
+      font-family: var(--font-body);
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+    }
+    .module-desc {
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+
+    /* ARCHITECTURE */
+    .arch-section {
+      max-width: 1200px; margin: 0 auto;
+      padding: 5rem 2.5rem;
+      position: relative; z-index: 1;
+    }
+    .arch-layers {
+      display: flex; flex-direction: column; gap: 4px;
+      margin-top: 3rem;
+    }
+    .arch-layer {
+      display: flex; align-items: center; gap: 1.5rem;
+      padding: 1.2rem 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .arch-layer:nth-child(2) { border-left-color: var(--accent2); }
+    .arch-layer:nth-child(3) { border-left-color: #a855f7; }
+    .arch-layer:nth-child(4) { border-left-color: var(--warn); }
+    .arch-layer:nth-child(5) { border-left-color: #facc15; }
+    .arch-layer:hover { transform: translateX(6px); }
+    .arch-layer-num {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      min-width: 60px;
+    }
+    .arch-layer-name {
+      font-weight: 600;
+      font-size: 1rem;
+      min-width: 220px;
+    }
+    .arch-layer-desc { color: var(--muted); font-size: 0.88rem; }
+
+    /* ADVANTAGES */
+    .adv-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 3rem;
+    }
+    .adv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.8rem;
+      border-radius: 4px;
+      text-align: center;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .adv-card:hover { border-color: var(--accent); transform: translateY(-4px); }
+    .adv-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .adv-label { font-size: 0.9rem; font-weight: 600; }
+
+    /* TEAM */
+    .team-grid {
+      display: flex; gap: 1.5rem; flex-wrap: wrap;
+      margin-top: 3rem;
+    }
+    .team-card {
+      flex: 1; min-width: 220px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 2rem;
+    }
+    .team-id {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 0.5rem;
+    }
+    .team-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 2.5rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      position: relative; z-index: 1;
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 640px) {
+      nav { padding: 1rem; }
+      .nav-links { display: none; }
+      .hero { padding: 6rem 1.2rem 3rem; }
+      .stats-strip { flex-direction: column; }
+      .stat-block:not(:last-child) { border-right: 1px solid var(--border); border-bottom: none; }
+      .section, .arch-section { padding: 3rem 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">STOCK<span>ALERT</span></div>
+  <div class="nav-links">
+    <a href="#modules">Modules</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#team">Team</a>
+    <a href="pages/login.html" class="nav-cta">Login</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-tag">// Real-Time Financial Intelligence System</div>
+  <h1>MONITOR.<br><span class="accent">ALERT.</span><br><span class="accent2">PROFIT.</span></h1>
+  <p class="hero-desc">
+    A full-stack stock price monitoring system that tracks live market data, fires instant alerts when your target prices are hit, and helps investors make smarter, faster decisions.
+  </p>
+  <div class="hero-btns">
+    <a href="pages/register.html" class="btn-primary">Get Started →</a>
+    <a href="pages/dashboard.html" class="btn-outline">View Dashboard</a>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker"></div>
+</div>
+
+<!-- STATS STRIP -->
+<div class="stats-strip">
+  <div class="stat-block">
+    <div class="stat-num">5</div>
+    <div class="stat-label">Core Modules</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-num">LIVE</div>
+    <div class="stat-label">Market Data</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-num">3</div>
+    <div class="stat-label">Alert Channels</div>
+  </div>
+  <div class="stat-block">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Firebase Backed</div>
+  </div>
+</div>
+
+<!-- MODULES -->
+<section class="section" id="modules">
+  <div class="section-tag">// 01 — System Modules</div>
+  <h2 class="section-title">PROJECT<br>MODULES</h2>
+  <div class="modules-grid">
+    <div class="module-card">
+      <div class="module-num">MODULE 01</div>
+      <div class="module-icon">👤</div>
+      <div class="module-title">User Management</div>
+      <div class="module-desc">Secure registration and login with Firebase Authentication. Profile management and role-based access control to protect sensitive data.</div>
+    </div>
+    <div class="module-card">
+      <div class="module-num">MODULE 02</div>
+      <div class="module-icon">📈</div>
+      <div class="module-title">Stock Monitoring</div>
+      <div class="module-desc">Fetches live stock prices via Market API. Displays real-time trends and continuously refreshes prices so investors never miss a movement.</div>
+    </div>
+    <div class="module-card">
+      <div class="module-num">MODULE 03</div>
+      <div class="module-icon">🔔</div>
+      <div class="module-title">Alert Management</div>
+      <div class="module-desc">Set custom target prices for any stock. Triggers instant alerts when price conditions are met — supports Email, SMS, and Push notifications.</div>
+    </div>
+    <div class="module-card">
+      <div class="module-num">MODULE 04</div>
+      <div class="module-icon">🗄️</div>
+      <div class="module-title">Database Management</div>
+      <div class="module-desc">Firebase Realtime Database stores user details, watchlists, and complete alert history using relational keys for fast lookups.</div>
+    </div>
+    <div class="module-card">
+      <div class="module-num">MODULE 05</div>
+      <div class="module-icon">📡</div>
+      <div class="module-title">Notification System</div>
+      <div class="module-desc">Multi-channel notification delivery — Email, SMS, and in-app — ensures timely updates for both price increases and decreases.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="architecture">
+  <div class="section-tag">// 02 — System Design</div>
+  <h2 class="section-title">PROPOSED<br>ARCHITECTURE</h2>
+  <div class="arch-layers">
+    <div class="arch-layer">
+      <div class="arch-layer-num">LAYER 01</div>
+      <div class="arch-layer-name">User Interface Layer</div>
+      <div class="arch-layer-desc">HTML / CSS / JavaScript frontend hosted on GitHub Pages</div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-layer-num">LAYER 02</div>
+      <div class="arch-layer-name">Application Processing Layer</div>
+      <div class="arch-layer-desc">Business logic, alert engine, and data processing via Firebase Functions</div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-layer-num">LAYER 03</div>
+      <div class="arch-layer-name">Stock API Integration</div>
+      <div class="arch-layer-desc">Real-time price feeds from Alpha Vantage / Yahoo Finance / Finnhub API</div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-layer-num">LAYER 04</div>
+      <div class="arch-layer-name">Database Layer</div>
+      <div class="arch-layer-desc">Firebase Realtime Database & Firestore — Users, Stocks, Alerts, Transactions</div>
+    </div>
+    <div class="arch-layer">
+      <div class="arch-layer-num">LAYER 05</div>
+      <div class="arch-layer-name">Notification System</div>
+      <div class="arch-layer-desc">Email (SMTP), SMS (Twilio), Push via Firebase Cloud Messaging</div>
+    </div>
+  </div>
+</section>
+
+<!-- ADVANTAGES -->
+<section class="section">
+  <div class="section-tag">// 03 — Why StockAlert Pro</div>
+  <h2 class="section-title">ADVANTAGES</h2>
+  <div class="adv-grid">
+    <div class="adv-card">
+      <div class="adv-icon">⚡</div>
+      <div class="adv-label">Real-time Monitoring</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🔔</div>
+      <div class="adv-label">Instant Alerts</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🛡️</div>
+      <div class="adv-label">Reduces Risk</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🎯</div>
+      <div class="adv-label">Easy to Use</div>
+    </div>
+    <div class="adv-card">
+      <div class="adv-icon">🧠</div>
+      <div class="adv-label">Smart Investing</div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section class="section" id="team">
+  <div class="section-tag">// 04 — Team</div>
+  <h2 class="section-title">TEAM<br>MEMBERS</h2>
+  <div class="team-grid">
+    <div class="team-card">
+      <div class="team-id">2403811710621033</div>
+      <div class="team-name">Giriraj N</div>
+    </div>
+    <div class="team-card">
+      <div class="team-id">2403811710621034</div>
+      <div class="team-name">Gokulnath R</div>
+    </div>
+    <div class="team-card">
+      <div class="team-id">2403811710621037</div>
+      <div class="team-name">Gurusaeth B</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2025 StockAlert Pro — Real Time Stock Price Monitoring and Alert System</p>
+  <p style="margin-top:0.4rem;">Built with Firebase + GitHub Pages</p>
+</footer>
+
+<script>
+  // Demo ticker data
+  const stocks = [
+    { sym: 'AAPL', price: '189.42', chg: '+1.23%', up: true },
+    { sym: 'TSLA', price: '248.11', chg: '-0.87%', up: false },
+    { sym: 'GOOGL', price: '171.95', chg: '+0.54%', up: true },
+    { sym: 'MSFT', price: '415.20', chg: '+2.01%', up: true },
+    { sym: 'AMZN', price: '192.50', chg: '-1.10%', up: false },
+    { sym: 'NFLX', price: '650.33', chg: '+3.22%', up: true },
+    { sym: 'META', price: '519.88', chg: '+0.95%', up: true },
+    { sym: 'NVDA', price: '875.20', chg: '-2.30%', up: false },
+  ];
+  const ticker = document.getElementById('ticker');
+  const doubled = [...stocks, ...stocks]; // duplicate for seamless scroll
+  doubled.forEach(s => {
+    const el = document.createElement('span');
+    el.className = 'ticker-item';
+    el.innerHTML = `<span class="ticker-sym">${s.sym}</span><span class="ticker-price">$${s.price}</span><span class="${s.up ? 'ticker-up' : 'ticker-down'}">${s.chg}</span>`;
+    ticker.appendChild(el);
+  });
+</script>
+</body>
+</html>
