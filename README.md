@@ -1,6 +1,5 @@
 # 📈 StockAlert Pro — Real-Time Stock Price Monitoring & Alert System
 
-> **BATCH-09 Project** — Giriraj N · Gokulnath R · Gurusaeth B
 
 A full-stack web application for real-time stock price monitoring with instant price alerts. Built with vanilla HTML/CSS/JS, hosted on **GitHub Pages**, backed by **Firebase**.
 
@@ -202,4 +201,4 @@ users/
 
 ---
 
-*Built for BATCH-09 Academic Project — Real Time Stock Price Monitoring and Alert System*
+*Built for Academic Project — Real Time Stock Price Monitoring and Alert System*
