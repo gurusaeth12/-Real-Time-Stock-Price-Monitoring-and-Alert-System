@@ -196,6 +196,10 @@ users/
 | Dashboard | `/pages/dashboard.html` | Live prices + set alerts |
 | My Alerts | `/pages/alerts.html` | View & manage all alerts |
 
+## 📸 Project Preview
+
+![StockPulse - Real-Time Stock Alerts](screenshot.png)
+
 ---
 
 *Built for BATCH-09 Academic Project — Real Time Stock Price Monitoring and Alert System*
